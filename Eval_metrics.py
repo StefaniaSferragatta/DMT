@@ -1,4 +1,4 @@
-## Evaluationt metrics
+## Evaluation metrics
 import csv
 import numpy as np
 
