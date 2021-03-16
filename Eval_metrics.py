@@ -38,7 +38,7 @@ se2 = readfile("Results_from_SE2.tsv")
 # numerator
 num = relevant_docs(se2,gt,k)
 P_at_k_SE2 = num/den
-print('P@k for SE2: ', round(P_at_k_SE2,3)) # equal to SE1, is normal?
+print('P@k for SE2: ', round(P_at_k_SE2,3)) # equal to SE1, the faster is the better
 
 #numerator SE_3
 se3 = readfile("Results_from_SE3.tsv")
