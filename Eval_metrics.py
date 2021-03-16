@@ -42,7 +42,7 @@ print('P@k for SE2: ', round(P_at_k_SE2,3)) # equal to SE1, the faster is the be
 
 #numerator SE_3
 se3 = readfile("Results_from_SE3.tsv")
-# P@k for SE_2
+# P@k for SE_3
 se3 = readfile("Results_from_SE3.tsv")
 # numerator
 num = relevant_docs(se3,gt,k)
@@ -67,6 +67,7 @@ r_precisonSE3 = num/den
 print('R-precision for SE3: ', round(r_precisonSE3,3))
 
 # Mean Reciprocal Rank (MRR)
+# we need the query.tsv for these two eval metrics
 """
 rec_rank=[]
 for i in gt[1:]:
