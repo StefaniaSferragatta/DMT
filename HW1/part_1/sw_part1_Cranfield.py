@@ -202,35 +202,39 @@ top_conf = top_five(mrr_cranfield)
 top_five = list(top_conf)
 
 '''COMPUTE THE P@k EVAL METRIC ON THE TOP-5 SE'''
-def p_topfive(top):
+def p_topfive(top,k):
     p_at_k_list =[]
-    k_list = [1, 3, 5, 10]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
     for i in top:
         sr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
-        for k in k_list:
-            p_at_k_list.append(p_at_k(sr,gt,k))
+        p_at_k_list.append(p_at_k(sr,gt,k))
     return p_at_k_list
 
-output = p_topfive(top_five)
-p_at_k_df = pd.DataFrame(output,columns=['P@k'])
-p_at_k_df.index = np.arange(1, len(p_at_k_df)+1) #reset the index and start from 1
+k_list = [1, 3, 5, 10]
+output=[]
+for k in k_list:
+    output.append(p_topfive(top_five,k))
+p_at_k_df = pd.DataFrame(output)
+p_at_k_df.index = k_list
+p_at_k_df.columns = ['SE_2','SE_4','SE_6','SE_7','SE_8'] #TOP 5 SE configuration
 
 
 '''COMPUTE THE nDCG EVAL METRIC ON THE TOP-5 SE'''
-def ndcg_topfive(top):
+def ndcg_topfive(top,k):
     ndcg_list =[]
-    k_list = [1, 3, 5, 10]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
     for i in top:
         sr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
-        for k in k_list:
-            ndcg_list.append(n_dcg(sr,gt,k))
+        ndcg_list.append(n_dcg(sr,gt,k))
     return ndcg_list
 
-output = ndcg_topfive(top_five)
-ndcg_df = pd.DataFrame(output,columns=['nDCG'])
-ndcg_df.index = np.arange(1, len(ndcg_df)+1) #reset the index and start from 1
+k_list = [1, 3, 5, 10]
+output_ndcg=[]
+for k in k_list:
+    output_ndcg.append(ndcg_topfive(top_five,k))
+ndcg_df = pd.DataFrame(output_ndcg)
+ndcg_df.index = k_list
+ndcg_df.columns = ['SE_2','SE_4','SE_6','SE_7','SE_8'] #TOP 5 SE configuration
 
 '''DEFINE A FUNCTION TO NORMALIZE THE RESULT OF EACH EVAL METRIC''' 
 def norm(df):
