@@ -237,18 +237,21 @@ ndcg_df.index = k_list
 ndcg_df.columns = ['SE_2','SE_4','SE_6','SE_7','SE_8'] #TOP 5 SE configuration
 
 '''DEFINE A FUNCTION TO NORMALIZE THE RESULT OF EACH EVAL METRIC''' 
-def norm(df):
-    norm_result=[]
-    for i in range(df.shape[0]):
-        norm_result.append(np.mean(list(list(df[i:(i+1)].values)[0])))
+# def norm(df):
+#     norm_result=[]
+#     for i in range(df.shape[0]):
+#         norm_result.append(np.mean(list(list(df[i:(i+1)].values)[0])))
 
-    #create a new df with the normalized values (this one will be plotted)
-    p_norm = pd.DataFrame(norm_result).T
-    return p_norm
+#     #create a new df with the normalized values (this one will be plotted)
+#     p_norm = pd.DataFrame(norm_result).T
+#     return p_norm
 
-p_at_k_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="RdPu",\
-              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot');
+'''PLOT P@k'''
+plot1 = p_at_k_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="RdPu",\
+              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot').get_figure();
+plot1.savefig('p_plot.jpg')
 
 '''PLOT nDCG'''
-ndcg_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="twilight_shifted",\
-            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot');
+plot2 = ndcg_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="twilight_shifted",\
+            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot').get_figure();
+plot2.savefig('ndcg_plot.jpg')
