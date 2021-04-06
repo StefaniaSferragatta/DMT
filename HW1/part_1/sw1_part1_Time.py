@@ -210,9 +210,8 @@ def r_distribution(num_configuration): # 'num_configuration' to change if the co
     return r_distri
 
 #invoke the function and save the df into a csv file
-r_pr_distr = r_distribution(6) #change the input if increase/decrease the num of config
-r_pr_distr.to_csv('part_1\part_1_1\Time_DATASET\R_precision_distribution.csv') 
-
+r_pr_distr = r_distribution(9) 
+r_pr_distr.to_csv('part_1\part_1_1\Time_DATASET\R_precision_distribution.csv')
 
 
 # select the top 5 configuration according to the MRR
@@ -229,13 +228,12 @@ mrr_time.columns = ['Config','MRR'] #add cols name
 mrr_time = mrr_time.astype({"MRR": float}) #change type of the column into float
 top_conf = top_five(mrr_time)
 top_five = list(top_conf)
+
   
-  
- #P@k with top 5
+#P@k with top 5
 def p_topfive(top,k):
     p_at_k_list =[]
-    file_gt = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
-    gt_csv = list(csv.reader(file_gt, delimiter="\t"))
+    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
     gt = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
     
     for i in top:
