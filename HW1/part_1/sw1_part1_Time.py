@@ -95,19 +95,21 @@ def sw_2(analyzer,score_fun,input_query,max_number_of_results):
     searcher.close()
     return result
   
-  
- def executor(analyzer,score_fun):
+def readfile(filename):
+    tsv_file = open(filename)
+    read_tsv = csv.reader(tsv_file, delimiter="\t")
+    return list(read_tsv) 
+
+def executor(analyzer,score_fun):
     result1=pd.DataFrame() # dataframe with the results of the given SE for ALL the queries; 
     tmp1=pd.DataFrame() #tmp dataframe 
     
     # open the file with all the queries
-    file = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Queries.tsv")
-    Queries_file1=list(csv.reader(file,delimiter='\t'))
+    Queries_file1= readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Queries.tsv")
     Queries=pd.DataFrame(Queries_file1[1:],columns=['Query_ID','Query'])
     
     # open the file of the GT
-    file_gt = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
-    gt_csv = list(csv.reader(file_gt, delimiter="\t"))
+    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
     gt1 = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
 
     #define a list with the unique query ids
@@ -135,8 +137,7 @@ def sw_2(analyzer,score_fun,input_query,max_number_of_results):
 
 def search_engine():
     # open the ground truth
-    file_gt = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
-    gt_csv = list(csv.reader(file_gt, delimiter="\t"))
+    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
     gt1 = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
 
     list_mrr1=[] # to store the MRR values for each SE configuration 
@@ -177,8 +178,7 @@ search_engine()
 #CREATE THE TABLE OF DISTRIBUTION 
 def r_distribution(num_configuration): # 'num_configuration' to change if the config changes
     # compute the r-precision eval metric on the SE config
-    file_gt = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
-    gt_csv = list(csv.reader(file_gt, delimiter="\t"))
+    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
     gt = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
     
     r_list = []
