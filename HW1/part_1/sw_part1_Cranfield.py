@@ -246,9 +246,9 @@ def norm(df):
     p_norm = pd.DataFrame(norm_result).T
     return p_norm
 
-'''PLOT P@k'''
-p_at_k_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"]);
-
+p_at_k_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="RdPu",\
+              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot');
 
 '''PLOT nDCG'''
-ndcg_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"]);
+ndcg_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="twilight_shifted",\
+            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot');
