@@ -127,22 +127,26 @@ def executor(analyzer,score_fun):
         result=result.append(tmp) #then for each query add it to the result dataframe 
     return result
 
+# Score based on position (by Whoosh documentation)
+def pos_score_fn(searcher, fieldname, text, matcher):
+    poses = matcher.value_as("positions")
+    return 1.0 / (poses[0] + 1)
 
 '''Function that wraps all the above definitions and runs the execution of the SE''' 
 def search_engine():
     # open the ground truth
     gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
     list_mrr=[] # to store the MRR values for each SE configuration 
-    # define the scoring functions TO CHANGE 
-    score_functions = [scoring.TF_IDF(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
+    # define the scoring functions
+    score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
     # define the text analyzers
     analyzers = [StemmingAnalyzer(),RegexAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
     #combinations for every chosen analyzer with every chosen scoring function
     num_analyzers = len(analyzers)
     num_score_fun = len(score_functions)
     i=1
-    sel_ana=['StemmingAnalyzer()','RegexAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']#text which will be used for graph and for mrr table
-    scor_func=['TF_IDF',' BM25F']
+    sel_ana=['StemmingAnalyzer()','RegexAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
+    scor_func=[' FunctionWeighting',' PL2',' BM25F']
     for x in range(num_analyzers):
         for y in range(num_score_fun):
             print(sel_ana[x]+scor_func[y])
@@ -156,7 +160,7 @@ def search_engine():
     # save into a table with MRR evaluation for every search engine configuration 
     mrrs=pd.DataFrame(list_mrr)
     mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv", index=False) #store MRR table
-
+    
 # exec the search engine with the different configurations
 search_engine() 
 
@@ -178,23 +182,22 @@ def r_distribution(num_configuration): # 'num_configuration' to change if the co
     #set the cols name
     r_distr.columns=['Mean','Min','1°_quartile','Median','3°_quartile','Max']
     #add a column to indicate the SE configuration
-    configs = ['conf_1','conf_2','conf_3','conf_4','conf_5','conf_6','conf_7','conf_8']
+    configs = ['conf_1','conf_2','conf_3','conf_4','conf_5','conf_6','conf_7','conf_8','conf_9','conf_10','conf_11','conf_12']
     r_distr['SE_Config'] = configs
     r_distri = r_distr[['SE_Config','Mean','Min','1°_quartile','Median','3°_quartile','Max']]
     r_distri.index = np.arange(1, len(configs)+1) #reset the index and start from 1
     return r_distri
 
 #invoke the function and save the df into a csv file
-r_pr_distr = r_distribution(8) #change the input if increase/decrease the num of config
+r_pr_distr = r_distribution(12) #change the input if increase/decrease the num of config
 r_pr_distr.to_csv('part_1\part_1_1\Cranfield_DATASET\R_precision_distribution.csv') 
 
 '''SELECT THE TOP 5 CONFIGURATION ACCORDING TO THE MRR'''
 def top_five(mrr):
     mrr.columns = ['Config','MRR'] #add cols name
     mrr.index = np.arange(1, len(mrr)+1) #reset a index
-    thd = round(mrr['MRR'].mean(),2) #set a treshold to pick the top se config
-    for i in range(1,6): #select only 5 se conf
-        top_five = mrr[mrr['MRR']>=thd].index
+    mrr.sort_values(by = ['MRR'],ascending=False)
+    top_five = mrr.head(5).index
     return top_five
 
 mrr_cranfield = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv",sep=',')
@@ -216,7 +219,7 @@ for k in k_list:
     output.append(p_topfive(top_five,k))
 p_at_k_df = pd.DataFrame(output)
 p_at_k_df.index = k_list
-p_at_k_df.columns = ['SE_2','SE_4','SE_6','SE_7','SE_8'] #TOP 5 SE configuration
+p_at_k_df.columns = ['SE_1','SE_2','SE_3','SE_4','SE_5'] #TOP 5 SE configuration
 
 
 '''COMPUTE THE nDCG EVAL METRIC ON THE TOP-5 SE'''
@@ -234,7 +237,7 @@ for k in k_list:
     output_ndcg.append(ndcg_topfive(top_five,k))
 ndcg_df = pd.DataFrame(output_ndcg)
 ndcg_df.index = k_list
-ndcg_df.columns = ['SE_2','SE_4','SE_6','SE_7','SE_8'] #TOP 5 SE configuration
+ndcg_df.columns = ['SE_1','SE_2','SE_3','SE_4','SE_5'] #TOP 5 SE configuration
 
 '''DEFINE A FUNCTION TO NORMALIZE THE RESULT OF EACH EVAL METRIC''' 
 # def norm(df):
@@ -247,11 +250,11 @@ ndcg_df.columns = ['SE_2','SE_4','SE_6','SE_7','SE_8'] #TOP 5 SE configuration
 #     return p_norm
 
 '''PLOT P@k'''
-plot1 = p_at_k_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="RdPu",\
+plot1 = p_at_k_df.plot(y=['SE_1','SE_2','SE_3','SE_4','SE_5'],colormap="RdPu",\
               xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot').get_figure();
 plot1.savefig('p_plot.jpg')
 
 '''PLOT nDCG'''
-plot2 = ndcg_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"],colormap="twilight_shifted",\
+plot2 = ndcg_df.plot(y=['SE_1','SE_2','SE_3','SE_4','SE_5'],colormap="twilight_shifted",\
             xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot').get_figure();
 plot2.savefig('ndcg_plot.jpg')
