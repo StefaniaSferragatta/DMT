@@ -247,8 +247,8 @@ def norm(df):
     return p_norm
 
 '''PLOT P@k'''
-
-
+p_at_k_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"]);
 
 
 '''PLOT nDCG'''
+ndcg_df.plot(y=["SE_2", "SE_4", "SE_6","SE_7","SE_8"]);
