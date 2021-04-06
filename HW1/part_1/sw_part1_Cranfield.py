@@ -189,7 +189,7 @@ def r_distribution(num_configuration): # 'num_configuration' to change if the co
     return r_distri
 
 #invoke the function and save the df into a csv file
-r_pr_distr = r_distribution(12) #change the input if increase/decrease the num of config
+r_pr_distr = r_distribution(12) 
 r_pr_distr.to_csv('part_1\part_1_1\Cranfield_DATASET\R_precision_distribution.csv') 
 
 '''SELECT THE TOP 5 CONFIGURATION ACCORDING TO THE MRR'''
