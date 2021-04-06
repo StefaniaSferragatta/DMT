@@ -133,7 +133,12 @@ def executor(analyzer,score_fun):
         tmp1['Query_id']=i
         result1=result1.append(tmp1) #then for each query add it to the result dataframe 
     return result1
- 
+
+# Score based on position (by Whoosh documentation)
+def pos_score_fn(searcher, fieldname, text, matcher):
+    poses = matcher.value_as("positions")
+    return 1.0 / (poses[0] + 1)
+
 
 def search_engine():
     # open the ground truth
@@ -141,16 +146,16 @@ def search_engine():
     gt1 = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
 
     list_mrr1=[] # to store the MRR values for each SE configuration 
-    # define the scoring functions TO CHANGE 
-    score_functions = [scoring.TF_IDF(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
+    # define the scoring functions
+    score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
     # define the text analyzers
     analyzers = [StemmingAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
     #combinations for every chosen analyzer with every chosen scoring function
     num_analyzers = len(analyzers)
     num_score_fun = len(score_functions)
     i=1
-    sel_ana=['StemmingAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']#text that will be used for graph and for mrr table
-    scor_func=[' TF_IDF',' BM25F']
+    sel_ana=['StemmingAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
+    scor_func=[' FunctionWeighting',' PL2',' BM25F']
     for x in range(num_analyzers):
         for y in range(num_score_fun):
             print(sel_ana[x]+scor_func[y])
@@ -169,7 +174,6 @@ def search_engine():
     # save into a table with MRR evaluation for every search engine configuration 
     mrrs=pd.DataFrame(list_mrr1)
     mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Time_DATASET\mrr.csv", index=False) #store MRR table
-    
    
  # exec the search engine with the different configurations for the Time dataset
 search_engine()  
@@ -199,7 +203,7 @@ def r_distribution(num_configuration): # 'num_configuration' to change if the co
     #set the cols name
     r_distr.columns=['Mean','Min','1°_quartile','Median','3°_quartile','Max']
     #add a column to indicate the SE configuration
-    configs = ['conf_1','conf_2','conf_3','conf_4','conf_5','conf_6']
+    configs = ['conf_1','conf_2','conf_3','conf_4','conf_5','conf_6','conf_7','conf_8','conf_9']
     r_distr['SE_Config'] = configs
     r_distri = r_distr[['SE_Config','Mean','Min','1°_quartile','Median','3°_quartile','Max']]
     r_distri.index = np.arange(1, len(configs)+1) #reset the index and start from 1
@@ -214,9 +218,8 @@ r_pr_distr.to_csv('part_1\part_1_1\Time_DATASET\R_precision_distribution.csv')
 # select the top 5 configuration according to the MRR
 def top_five(mrr):
     mrr.index = np.arange(1, len(mrr)+1) #reset a index
-    thd = round(mrr['MRR'].mean(),2) #set a treshold to pick the top se config
-    for i in range(1,6): #select only 5 se conf
-        top_five = mrr[mrr['MRR']>=0.45].index #manual set thd = 0.45 TO CHANGE WHEN THE CONFIG CHANGES
+    mrr.sort_values(by = ['MRR'],ascending=False)
+    top_five = mrr.head(5).index
     return top_five
 
 file_MRR = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\mrr.csv")
@@ -226,7 +229,6 @@ mrr_time.columns = ['Config','MRR'] #add cols name
 mrr_time = mrr_time.astype({"MRR": float}) #change type of the column into float
 top_conf = top_five(mrr_time)
 top_five = list(top_conf)
-
   
   
  #P@k with top 5
@@ -251,9 +253,9 @@ for k in k_list:
     output.append(p_topfive(top_five,k))
 p_at_k_df = pd.DataFrame(output)
 p_at_k_df.index = k_list
-p_at_k_df.columns = ['SE_2','SE_3','SE_4','SE_5','SE_6'] #TOP 5 SE configuration
+p_at_k_df.columns = ['SE_1','SE_2','SE_3','SE_4','SE_5'] #TOP 5 SE configuration
 
-plot1 = p_at_k_df.plot(y=['SE_2','SE_3','SE_4','SE_5','SE_6'],colormap="cool",\
+plot1 = p_at_k_df.plot(y=['SE_1','SE_2','SE_3','SE_4','SE_5'],colormap="cool",\
               xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot Time dataset').get_figure();
 plot1.savefig('p_plot.jpg')
 
@@ -279,9 +281,9 @@ for k in k_list:
     output_ndcg.append(ndcg_topfive(top_five,k))
 ndcg_df = pd.DataFrame(output_ndcg)
 ndcg_df.index = k_list
-ndcg_df.columns = ['SE_2','SE_3','SE_4','SE_5','SE_6'] #TOP 5 SE configuration
+ndcg_df.columns = ['SE_1','SE_2','SE_3','SE_4','SE_5'] #TOP 5 SE configuration
 
 
-plot2 = ndcg_df.plot(y=['SE_2','SE_3','SE_4','SE_5','SE_6'],colormap="magma",\
+plot2 = ndcg_df.plot(y=['SE_1','SE_2','SE_3','SE_4','SE_5'],colormap="magma",\
             xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot Time dataset').get_figure();
 plot2.savefig('ndcg_plot.jpg')
