@@ -1,36 +1,29 @@
 import pandas as pd
 import numpy as np
 import math
+from statistics import mean
 
-# P@k 
-#def p_at_k(sr1,gt,k):
-#     Q=set(gt['Query_id'].unique())
-#     for i in Q:
-#         # filter the rows of the df with QUERY_ID = i
-#         seID = sr1['Doc_ID'].loc[sr1['Query_id'] == i].tolist()
-#         gtID = gt['Relevant_Doc_id'].loc[gt['Query_id'] == i].tolist()
-#         #because not all queries are considered in the Ground Truth CSV
-#         if len(gtID) == 0:
-#             continue
-#         numerator = sum(el in seID for el in gtID) #do the summation of the relevant doc in the SE
-#         denominator = min(k,len(gtID))
-#     return (numerator/denominator)
 
+#function used in P@k 
 def relevant_docs(search_engine,ground_truth,k):
     rel_doc = 0
-    for i in search_engine[1:k+1]:
-        for j in ground_truth[1:]:
+    for i in search_engine[:k]:
+        for j in ground_truth:
             if i==j:
                 rel_doc +=1
     return rel_doc
 
 # P@k 
 def p_at_k(se,gt,k):
-    se1 = se['Doc_ID'].tolist()
-    gt = gt['Relevant_Doc_id'].tolist()
-    num = relevant_docs(se1,gt,k) # numerator
-    den = min(k,len(gt)) # denominator
-    return (num/den)
+    p_list = []
+    Q=set(gt['Query_id'].unique())
+    for i in Q:
+        seID = se['Doc_ID'].loc[se['Query_id'] == i].tolist()
+        gtID = gt['Relevant_Doc_id'].loc[gt['Query_id'] == i].tolist()
+        num = relevant_docs(seID,gtID,k) # numerator
+        den = min(k,len(gtID)) # denominator
+        p_list.append(num/den)
+    return (mean(p_list))
 
 # R-precision
 def r_precision(se, gt):
@@ -75,26 +68,19 @@ def MRR(sr1,gt):
 
 # normalized Discounted Cumulative Gain (nDCG)
 def n_dcg(se,gt,k):
-    result = 0
-    #n_query = se['Query_id'].max()
-    #for i in range(1,n_query+1):
-    Q=set(gt['Query_id'].unique()) #number of unique queries in the ground truth
+    rel=0
+    dcg=0
+    idcg=0
+    ndcg=[]
+    Q=set(gt['Query_id'].unique())
     for i in Q:
-        top_result = pd.DataFrame()
-        # get top k relevant docs from the SE1
-        top_se = se[['Doc_ID', 'Rank']][:k]
-        top_gt = gt[['Relevant_Doc_id']][:k]
-        # store into top_result only relevant docs
-        top_result = top_gt.merge(top_se, how='inner', left_on='Relevant_Doc_id', right_on='Doc_ID') 
-        # (every element in the list has relevance = 1)
-        rank = top_result['Rank'].tolist() # store into a list the ranks
-        ranks = [int(i) for i in rank] #convert into int
-        # compute the discounted cumulative gain
-        dcg = 0
-        for i in ranks: #if the query id is in the GT than relevance = 1
-            dcg += 1/(math.log2(i+2))
-        # compute the ideal discounted cumulative gain
-        idcg = 0
-        for j in range(1, k+1):
-            idcg += 1/(math.log2(j+2))
-        return (dcg/idcg)
+        seID = se['Doc_ID'].loc[se['Query_id'] == i].tolist()
+        gtID = gt['Relevant_Doc_id'].loc[gt['Query_id'] == i].tolist()
+        for el in gtID:
+            for it in seID[:k]:
+                rel=1 if it==el else 0
+        for p in range(1,k+1):
+            dcg+=rel/(math.log2(p+1))
+            idcg+=1/(math.log2(p+1))
+        ndcg.append(dcg/idcg)
+    return (mean(ndcg))
