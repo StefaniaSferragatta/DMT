@@ -106,11 +106,11 @@ def executor(analyzer,score_fun):
     Queries=pd.read_csv(Queries_file,sep='\t')
     # open the file of the GT
     gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t') 
-    #define a list with the unique query ids
-
+    # define a list with the unique query ids
     Q=list(gt['Query_id'].unique()) 
-    dq={} #key=Query_id, value=number of relevant documents related to that query_id
-    for i in Q: # for each query_id
+    dq={} 
+    for i in Q: 
+        #key=Query_id, value=number of relevant documents related to that query_id
         dq[i]=len(list(gt[gt['Query_id']==i]['Relevant_Doc_id']))
 
     file_toindex=os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\doc_to_index.csv"
@@ -134,6 +134,7 @@ def pos_score_fn(searcher, fieldname, text, matcher):
     poses = matcher.value_as("positions")
     return 1.0 / (poses[0] + 1)
 
+'''Defining the core function for the search engine'''
 def search_engine():
     # open the ground truth
     gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
@@ -153,7 +154,7 @@ def search_engine():
     #----------------------------
     for x in range(num_analyzers):
         for y in range(num_score_fun):
-            print(sel_ana[x]+scor_func[y]) # to delete
+            print(sel_ana[x]+scor_func[y]) # TO DELETE
             # execute queries with the chosen configuration
             se=executor(analyzers[x],score_functions[y]) 
             #save results of the search engine
@@ -165,38 +166,10 @@ def search_engine():
     mrrs=pd.DataFrame(list_mrr)
     mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv", index=False) #store MRR table
     
-    def search_engine():
-    # open the ground truth
-    gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
-    list_mrr=[] # to store the MRR values for each SE configuration 
-    # define the scoring functions
-    score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
-    # define the text analyzers
-    analyzers = [StemmingAnalyzer(),RegexAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
-    #combinations for every chosen analyzer with every chosen scoring function
-    num_analyzers = len(analyzers)
-    num_score_fun = len(score_functions)
-    i=1
-    #TO DELETE
-    #----------------------------
-    sel_ana=['StemmingAnalyzer()','RegexAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
-    scor_func=[' FunctionWeighting',' PL2',' BM25F']
-    #----------------------------
-    for x in range(num_analyzers):
-        for y in range(num_score_fun):
-            print(sel_ana[x]+scor_func[y]) # to delete
-            # execute queries with the chosen configuration
-            se=executor(analyzers[x],score_functions[y]) 
-            #save results of the search engine
-            se.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+str(i)+".csv",index=False) 
-            #compute the MRR 
-            list_mrr.append((sel_ana[x]+scor_func[y],MRR(se,gt))) 
-            i+=1
-    # save into a table with MRR evaluation for every search engine configuration 
-    mrrs=pd.DataFrame(list_mrr)
-    mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv", index=False) #store MRR table
-    
-    #CREATE THE TABLE OF DISTRIBUTION 
+# exec the search engine with the different configurations for the Cranfield dataset
+search_engine() 
+
+'''Function for the creation of the r_precision distribution values''' 
 def r_distribution(num_configuration): # 'num_configuration' to change if the config changes
     # compute the r-precision eval metric on the SE config
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
@@ -236,8 +209,7 @@ def top_five():
 top_conf = top_five()
 top_five = list(top_conf)
 
-
-#P@k with top 5
+''' P@k on the top 5'''
 def p_topfive(top,k):
     p_at_k_list =[]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
@@ -263,7 +235,7 @@ plot1 = p_at_k_df.plot(y=['SE_9','SE_12','SE_11','SE_3','SE_8'],colormap="spring
               xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot Cranfield dataset').get_figure();
 plot1.savefig('Cranfield_p_plot.jpg')
 
-#nDCG with top 5
+'''nDCG on the top 5'''
 def ndcg_topfive(top,k):
     ndcg_list =[]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
