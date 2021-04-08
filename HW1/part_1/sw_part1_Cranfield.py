@@ -12,8 +12,9 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from Eval_metrics import * #my script .py with the implementation of the eval metrics
+import random
 
-''' Function to convert the html file into csv'''
+'''Function to convert the html file into csv'''
 def converter():
     #path to the html files for the Cranfield_DATASET
     path_Cranfield = os.getcwd()+ "\part_1\part_1_1\Cranfield_DATASET\DOCUMENTS\_" 
@@ -40,7 +41,8 @@ def converter():
 doc_Cran_converted = converter()
 doc_Cran_converted.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\doc_to_index.csv")
 
-'''Function for the first part of the search engine software'''
+
+'''First part of the software for the search engines'''
 def sw_1(analyzer,filename):
     # creating schema with fields id, title and content
     schema = Schema(id=ID(stored=True),title=TEXT(stored=False, analyzer=analyzer),\
@@ -70,8 +72,8 @@ def sw_1(analyzer,filename):
     writer.commit()
     # close the file
     in_file.close()
-
-'''Function for the second part of the search engine software'''
+    
+ '''Defing the query engine (second part of the software for the search engines)'''
 def sw_2(score_fun,input_query,max_number_of_results):
     directory_containing_the_index = os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET" 
     # thanks to the ix we can retreive doc of interest for the given SE configurations
@@ -93,9 +95,9 @@ def sw_2(score_fun,input_query,max_number_of_results):
     result.columns=["Rank","Doc_ID","Score"] 
     # the column 'score' contains the values of the scoring function, that we use for having in a quantitative way the relevance of a doc for a particulare query
     searcher.close()
-    return result
+    return result  
 
-'''Function to provide the result for each query (given the configurations of the SE)'''
+'''Execute the engine with the given configuration'''
 def executor(analyzer,score_fun):
     result=pd.DataFrame() # dataframe with the results of the given SE for ALL the queries; 
     tmp=pd.DataFrame() #tmp dataframe 
@@ -127,12 +129,11 @@ def executor(analyzer,score_fun):
         result=result.append(tmp) #then for each query add it to the result dataframe 
     return result
 
-# Score based on position (by Whoosh documentation)
+# Score based on position (from Whoosh documentation)
 def pos_score_fn(searcher, fieldname, text, matcher):
     poses = matcher.value_as("positions")
     return 1.0 / (poses[0] + 1)
 
-'''Function that wraps all the above definitions and runs the execution of the SE''' 
 def search_engine():
     # open the ground truth
     gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
@@ -145,11 +146,14 @@ def search_engine():
     num_analyzers = len(analyzers)
     num_score_fun = len(score_functions)
     i=1
+    #TO DELETE
+    #----------------------------
     sel_ana=['StemmingAnalyzer()','RegexAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
     scor_func=[' FunctionWeighting',' PL2',' BM25F']
+    #----------------------------
     for x in range(num_analyzers):
         for y in range(num_score_fun):
-            print(sel_ana[x]+scor_func[y])
+            print(sel_ana[x]+scor_func[y]) # to delete
             # execute queries with the chosen configuration
             se=executor(analyzers[x],score_functions[y]) 
             #save results of the search engine
@@ -161,10 +165,38 @@ def search_engine():
     mrrs=pd.DataFrame(list_mrr)
     mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv", index=False) #store MRR table
     
-# exec the search engine with the different configurations
-search_engine() 
-
-'''INVOKE THE FUNCTION TO COMPUTE THE R-PRECISION AND CREATE THE DISTRIBUTION TABLE'''
+    def search_engine():
+    # open the ground truth
+    gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
+    list_mrr=[] # to store the MRR values for each SE configuration 
+    # define the scoring functions
+    score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
+    # define the text analyzers
+    analyzers = [StemmingAnalyzer(),RegexAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
+    #combinations for every chosen analyzer with every chosen scoring function
+    num_analyzers = len(analyzers)
+    num_score_fun = len(score_functions)
+    i=1
+    #TO DELETE
+    #----------------------------
+    sel_ana=['StemmingAnalyzer()','RegexAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
+    scor_func=[' FunctionWeighting',' PL2',' BM25F']
+    #----------------------------
+    for x in range(num_analyzers):
+        for y in range(num_score_fun):
+            print(sel_ana[x]+scor_func[y]) # to delete
+            # execute queries with the chosen configuration
+            se=executor(analyzers[x],score_functions[y]) 
+            #save results of the search engine
+            se.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+str(i)+".csv",index=False) 
+            #compute the MRR 
+            list_mrr.append((sel_ana[x]+scor_func[y],MRR(se,gt))) 
+            i+=1
+    # save into a table with MRR evaluation for every search engine configuration 
+    mrrs=pd.DataFrame(list_mrr)
+    mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv", index=False) #store MRR table
+    
+    #CREATE THE TABLE OF DISTRIBUTION 
 def r_distribution(num_configuration): # 'num_configuration' to change if the config changes
     # compute the r-precision eval metric on the SE config
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
@@ -192,69 +224,67 @@ def r_distribution(num_configuration): # 'num_configuration' to change if the co
 r_pr_distr = r_distribution(12) 
 r_pr_distr.to_csv('part_1\part_1_1\Cranfield_DATASET\R_precision_distribution.csv') 
 
-'''SELECT THE TOP 5 CONFIGURATION ACCORDING TO THE MRR'''
-def top_five(mrr):
+# select the top 5 configuration according to the MRR
+def top_five():
+    mrr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv",sep=',')
     mrr.columns = ['Config','MRR'] #add cols name
     mrr.index = np.arange(1, len(mrr)+1) #reset a index
-    mrr.sort_values(by = ['MRR'],ascending=False)
-    top_five = mrr.head(5).index
+    top = mrr.sort_values(by = ['MRR'],ascending=False).head(5)
+    top_five = top.index
     return top_five
 
-mrr_cranfield = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv",sep=',')
-top_conf = top_five(mrr_cranfield)
+top_conf = top_five()
 top_five = list(top_conf)
 
-'''COMPUTE THE P@k EVAL METRIC ON THE TOP-5 SE'''
+
+#P@k with top 5
 def p_topfive(top,k):
     p_at_k_list =[]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
+    #for each index of the top 5
     for i in top:
         sr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
+        #compute the P@k and store the result into a list
         p_at_k_list.append(p_at_k(sr,gt,k))
     return p_at_k_list
 
 k_list = [1, 3, 5, 10]
 output=[]
+#invoke the function for each value of k
 for k in k_list:
     output.append(p_topfive(top_five,k))
-p_at_k_df = pd.DataFrame(output)
-p_at_k_df.index = k_list
-p_at_k_df.columns = ['SE_1','SE_2','SE_3','SE_4','SE_5'] #TOP 5 SE configuration
+#save the result into a df
+p_at_k_df = pd.DataFrame(output) 
+p_at_k_df.index = k_list #set the index
+p_at_k_df.columns = ['SE_9','SE_12','SE_11','SE_3','SE_8']  #set the cols name with the top 5 SE configuration
 
+#plot the P@k top5
+plot1 = p_at_k_df.plot(y=['SE_9','SE_12','SE_11','SE_3','SE_8'],colormap="spring",\
+              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot Cranfield dataset').get_figure();
+plot1.savefig('Cranfield_p_plot.jpg')
 
-'''COMPUTE THE nDCG EVAL METRIC ON THE TOP-5 SE'''
+#nDCG with top 5
 def ndcg_topfive(top,k):
     ndcg_list =[]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
     for i in top:
         sr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
+        #compute the nDCG and store the result into a list
         ndcg_list.append(n_dcg(sr,gt,k))
     return ndcg_list
 
 k_list = [1, 3, 5, 10]
 output_ndcg=[]
+#invoke the function for each value of k
 for k in k_list:
     output_ndcg.append(ndcg_topfive(top_five,k))
+#save the result into a df
 ndcg_df = pd.DataFrame(output_ndcg)
 ndcg_df.index = k_list
-ndcg_df.columns = ['SE_1','SE_2','SE_3','SE_4','SE_5'] #TOP 5 SE configuration
+ndcg_df.columns = ['SE_9','SE_12','SE_11','SE_3','SE_8'] #TOP 5 SE configuration
 
-'''DEFINE A FUNCTION TO NORMALIZE THE RESULT OF EACH EVAL METRIC''' 
-# def norm(df):
-#     norm_result=[]
-#     for i in range(df.shape[0]):
-#         norm_result.append(np.mean(list(list(df[i:(i+1)].values)[0])))
+#plot the nDCG 
+plot2 = ndcg_df.plot(y=['SE_9','SE_12','SE_11','SE_3','SE_8'],colormap="twilight_shifted",\
+            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot Cranfield dataset').get_figure();
 
-#     #create a new df with the normalized values (this one will be plotted)
-#     p_norm = pd.DataFrame(norm_result).T
-#     return p_norm
-
-'''PLOT P@k'''
-plot1 = p_at_k_df.plot(y=['SE_1','SE_2','SE_3','SE_4','SE_5'],colormap="RdPu",\
-              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot').get_figure();
-plot1.savefig('p_plot.jpg')
-
-'''PLOT nDCG'''
-plot2 = ndcg_df.plot(y=['SE_1','SE_2','SE_3','SE_4','SE_5'],colormap="twilight_shifted",\
-            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot').get_figure();
-plot2.savefig('ndcg_plot.jpg')
+plot2.savefig('Cranfield_ndcg_plot.jpg')
