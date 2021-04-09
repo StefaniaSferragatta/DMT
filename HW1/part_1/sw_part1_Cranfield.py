@@ -11,8 +11,8 @@ import os
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
-from Eval_metrics import * #my script .py with the implementation of the eval metrics
 import random
+from Utilities_cranfield import * #my .py script with the implementation of the eval matrics and some utilities functions
 
 '''Function to convert the html file into csv'''
 def converter():
@@ -129,11 +129,6 @@ def executor(analyzer,score_fun):
         result=result.append(tmp) #then for each query add it to the result dataframe 
     return result
 
-# Score based on position (from Whoosh documentation)
-def pos_score_fn(searcher, fieldname, text, matcher):
-    poses = matcher.value_as("positions")
-    return 1.0 / (poses[0] + 1)
-
 '''Defining the core function for the search engine'''
 def search_engine():
     # open the ground truth
@@ -232,7 +227,7 @@ p_at_k_df.columns = ['SE_9','SE_12','SE_11','SE_3','SE_8']  #set the cols name w
 
 #plot the P@k top5
 plot1 = p_at_k_df.plot(y=['SE_9','SE_12','SE_11','SE_3','SE_8'],colormap="spring",\
-              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot Cranfield dataset').get_figure();
+              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k Cranfield dataset').get_figure();
 plot1.savefig('Cranfield_p_plot.jpg')
 
 '''nDCG on the top 5'''
@@ -257,6 +252,6 @@ ndcg_df.columns = ['SE_9','SE_12','SE_11','SE_3','SE_8'] #TOP 5 SE configuration
 
 #plot the nDCG 
 plot2 = ndcg_df.plot(y=['SE_9','SE_12','SE_11','SE_3','SE_8'],colormap="twilight_shifted",\
-            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot Cranfield dataset').get_figure();
+            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k Cranfield dataset').get_figure();
 
 plot2.savefig('Cranfield_ndcg_plot.jpg')
