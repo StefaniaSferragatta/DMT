@@ -12,13 +12,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 import random
-from Eval_metrics import * #my script .py with the implementation of the evaluation metrics
-
-'''Function used to read the .tsv file'''
-def readfile(filename):
-    tsv_file = open(filename)
-    read_tsv = csv.reader(tsv_file, delimiter="\t")
-    return list(read_tsv)
+from Utilities_time import * #my script .py with the implementation of the evaluation metrics and utilities functions
 
 '''Function to convert the html file into csv'''
 def converter():
@@ -134,11 +128,6 @@ def executor(analyzer,score_fun):
         tmp1['Query_id']=i
         result1=result1.append(tmp1) #add it to the result dataframe 
     return result1
-
-# Score based on position (from Whoosh documentation)
-def pos_score_fn(searcher, fieldname, text, matcher):
-    poses = matcher.value_as("positions")
-    return 1.0 / (poses[0] + 1)
 
 '''Definition of the core search engine'''
 def search_engine():
@@ -265,7 +254,7 @@ p_at_k_df.columns = ['SE_9','SE_3','SE_6','SE_8','SE_2'] #set the cols name with
 
 #plot the P@k top5
 plot1 = p_at_k_df.plot(y=['SE_9','SE_3','SE_6','SE_8','SE_2'],colormap="cool",\
-              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k plot Time dataset').get_figure();
+              xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k Time dataset').get_figure();
 plot1.savefig('Time_p_plot.jpg')
 
 '''nDCG on the top 5 configurations'''
@@ -295,5 +284,5 @@ ndcg_df.columns = ['SE_9','SE_3','SE_6','SE_8','SE_2'] #set the cols name with t
 
 #plot the nDCG 
 plot2 = ndcg_df.plot(y=['SE_9','SE_3','SE_6','SE_8','SE_2'],colormap="magma",\
-            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k plot Time dataset').get_figure();
+            xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k Time dataset').get_figure();
 plot2.savefig('Time_ndcg_plot.jpg')
