@@ -1,17 +1,16 @@
+import os
+import csv
+import time
+import random
+import numpy as np
+import modin.pandas as pd
+from bs4 import BeautifulSoup
 from whoosh.index import create_in
 from whoosh.fields import *
 from whoosh.analysis import *
 from whoosh.qparser import *
-from whoosh import scoring
-from whoosh import *
 from whoosh.writing import AsyncWriter
-import csv
-import time
-import os
-import numpy as np
-import pandas as pd
-from bs4 import BeautifulSoup
-import random
+from whoosh import *
 from Utilities_cranfield import * #my .py script with the implementation of the eval matrics and some utilities functions
 
 '''Function to convert the html file into csv'''
@@ -73,7 +72,7 @@ def sw_1(analyzer,filename):
     # close the file
     in_file.close()
     
- '''Defing the query engine (second part of the software for the search engines)'''
+'''Defing the query engine (second part of the software for the search engines)'''
 def sw_2(score_fun,input_query,max_number_of_results):
     directory_containing_the_index = os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET" 
     # thanks to the ix we can retreive doc of interest for the given SE configurations
@@ -137,25 +136,24 @@ def search_engine():
     # define the scoring functions
     score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
     # define the text analyzers
-    analyzers = [StemmingAnalyzer(),RegexAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
+    analyzers = [StemmingAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
     #combinations for every chosen analyzer with every chosen scoring function
     num_analyzers = len(analyzers)
     num_score_fun = len(score_functions)
+    
+    analyz=['StemmingAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
+    scor_fun=[' FunctionWeighting',' PL2',' BM25F']
     i=1
-    #TO DELETE
-    #----------------------------
-    sel_ana=['StemmingAnalyzer()','RegexAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
-    scor_func=[' FunctionWeighting',' PL2',' BM25F']
-    #----------------------------
     for x in range(num_analyzers):
         for y in range(num_score_fun):
-            print(sel_ana[x]+scor_func[y]) # TO DELETE
+            print('Executing config n: ' + str(i))
             # execute queries with the chosen configuration
             se=executor(analyzers[x],score_functions[y]) 
             #save results of the search engine
             se.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+str(i)+".csv",index=False) 
             #compute the MRR 
-            list_mrr.append((sel_ana[x]+scor_func[y],MRR(se,gt))) 
+            list_mrr.append((analyz[x]+scor_fun[y],MRR(se,gt))) 
+            #update the counter
             i+=1
     # save into a table with MRR evaluation for every search engine configuration 
     mrrs=pd.DataFrame(list_mrr)
@@ -182,14 +180,14 @@ def r_distribution(num_configuration): # 'num_configuration' to change if the co
     #set the cols name
     r_distr.columns=['Mean','Min','1°_quartile','Median','3°_quartile','Max']
     #add a column to indicate the SE configuration
-    configs = ['conf_1','conf_2','conf_3','conf_4','conf_5','conf_6','conf_7','conf_8','conf_9','conf_10','conf_11','conf_12']
+    configs = ['conf_1','conf_2','conf_3','conf_4','conf_5','conf_6','conf_7','conf_8','conf_9']
     r_distr['SE_Config'] = configs
     r_distri = r_distr[['SE_Config','Mean','Min','1°_quartile','Median','3°_quartile','Max']]
     r_distri.index = np.arange(1, len(configs)+1) #reset the index and start from 1
     return r_distri
 
 #invoke the function and save the df into a csv file
-r_pr_distr = r_distribution(12) 
+r_pr_distr = r_distribution(num_configuration=9) 
 r_pr_distr.to_csv('part_1\part_1_1\Cranfield_DATASET\R_precision_distribution.csv') 
 
 # select the top 5 configuration according to the MRR
@@ -223,10 +221,10 @@ for k in k_list:
 #save the result into a df
 p_at_k_df = pd.DataFrame(output) 
 p_at_k_df.index = k_list #set the index
-p_at_k_df.columns = ['SE_9','SE_12','SE_11','SE_3','SE_8']  #set the cols name with the top 5 SE configuration
+p_at_k_df.columns = ['SE_6','SE_9','SE_8','SE_3','SE_5']  #set the cols name with the top 5 SE configuration
 
 #plot the P@k top5
-plot1 = p_at_k_df.plot(y=['SE_9','SE_12','SE_11','SE_3','SE_8'],colormap="spring",\
+plot1 = p_at_k_df.plot(y=['SE_6','SE_9','SE_8','SE_3','SE_5'],colormap="spring",\
               xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k Cranfield dataset').get_figure();
 plot1.savefig('Cranfield_p_plot.jpg')
 
@@ -248,10 +246,10 @@ for k in k_list:
 #save the result into a df
 ndcg_df = pd.DataFrame(output_ndcg)
 ndcg_df.index = k_list
-ndcg_df.columns = ['SE_9','SE_12','SE_11','SE_3','SE_8'] #TOP 5 SE configuration
+ndcg_df.columns = ['SE_6','SE_9','SE_8','SE_3','SE_5'] #TOP 5 SE configuration
 
 #plot the nDCG 
-plot2 = ndcg_df.plot(y=['SE_9','SE_12','SE_11','SE_3','SE_8'],colormap="twilight_shifted",\
+plot2 = ndcg_df.plot(y=['SE_6','SE_9','SE_8','SE_3','SE_5'],colormap="winter",\
             xlabel="k", ylabel="values",figsize=(10,10), title = 'nDCG@k Cranfield dataset').get_figure();
 
 plot2.savefig('Cranfield_ndcg_plot.jpg')
