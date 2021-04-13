@@ -137,17 +137,16 @@ def search_engine():
     score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
     # define the text analyzers
     analyzers = [StemmingAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
-    #combinations for every chosen analyzer with every chosen scoring function
-    num_analyzers = len(analyzers)
-    num_score_fun = len(score_functions)
-    
+    # store the name into lists to add it into the output SE_file together with the score
     analyz=['StemmingAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
     scor_fun=[' FunctionWeighting',' PL2',' BM25F']
+    #initialize a counter
     i=1
-    for x in range(num_analyzers):
-        for y in range(num_score_fun):
+    #invoke the executor() with the combinations analyzer&scoring function
+    for x in range(len(analyzers)):
+        for y in range(len(score_functions)):
             print('Executing config n: ' + str(i))
-            # execute queries with the chosen configuration
+            #execute queries with the chosen configuration
             se=executor(analyzers[x],score_functions[y]) 
             #save results of the search engine
             se.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+str(i)+".csv",index=False) 
@@ -166,7 +165,7 @@ search_engine()
 def r_distribution(num_configuration): # 'num_configuration' to change if the config changes
     # compute the r-precision eval metric on the SE config
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
-    r_list = []
+    r_list = [] #list to store the results
     for i in range(1,num_configuration+1): 
         se = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
         r_list.append(r_precision(se,gt))
@@ -202,7 +201,7 @@ def top_five():
 top_conf = top_five()
 top_five = list(top_conf)
 
-''' P@k on the top 5'''
+''' Compute the P@k on the top 5'''
 def p_topfive(top,k):
     p_at_k_list =[]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
@@ -228,7 +227,7 @@ plot1 = p_at_k_df.plot(y=['SE_6','SE_9','SE_8','SE_3','SE_5'],colormap="spring",
               xlabel="k", ylabel="values",figsize=(10,10), title = 'P@k Cranfield dataset').get_figure();
 plot1.savefig('Cranfield_p_plot.jpg')
 
-'''nDCG on the top 5'''
+'''Compute the nDCG on the top 5'''
 def ndcg_topfive(top,k):
     ndcg_list =[]
     gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
