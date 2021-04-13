@@ -9,7 +9,7 @@ import csv
 import time
 import os
 import numpy as np
-import pandas as pd
+import modin.pandas as pd
 from bs4 import BeautifulSoup
 import random
 from Utilities_time import * #my script .py with the implementation of the evaluation metrics and utilities functions
@@ -140,18 +140,15 @@ def search_engine():
     score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
     # define the text analyzers
     analyzers = [StemmingAnalyzer(),FancyAnalyzer(),LanguageAnalyzer('en')]
-    #combinations for every chosen analyzer with every chosen scoring function
-    num_analyzers = len(analyzers)
-    num_score_fun = len(score_functions)
+    # store the name into lists to add it into the output SE_file together with the score
+    analyz=['StemmingAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
+    scor_fun=[' FunctionWeighting',' PL2',' BM25F']
+    #initialize a counter
     i=1
-    #TO DELETE
-    #----------------------------
-    sel_ana=['StemmingAnalyzer()','FancyAnalyzer()','LanguageAnalyzer()']
-    scor_func=[' FunctionWeighting',' PL2',' BM25F']
-    #--------------------
-    for x in range(num_analyzers):
-        for y in range(num_score_fun):
-            print(sel_ana[x]+scor_func[y]) #TO DELETE
+    #invoke the executor() with the combinations analyzer&scoring function
+    for x in range(len(analyzers)):
+        for y in range(len(score_functions)):
+            print('Executing config n:' + str(i))
             # execute queries with the chosen configuration
             sr_1=executor(analyzers[x],score_functions[y]) 
             #save results of the search engine
@@ -162,7 +159,7 @@ def search_engine():
             se_csv = list(csv.reader(file_sr, delimiter=","))
             sr = pd.DataFrame(se_csv[1:],columns=['Rank','Doc_ID','Score','Query_id'])
             
-            list_mrr1.append((sel_ana[x]+scor_func[y],MRR(sr,gt1))) 
+            list_mrr1.append((analyz[x]+scor_fun[y],MRR(sr,gt1))) 
             i+=1
     # save into a table with MRR evaluation for every search engine configuration 
     mrrs=pd.DataFrame(list_mrr1)
