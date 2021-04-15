@@ -16,14 +16,11 @@ from Utilities_time import * #my script .py with the implementation of the evalu
 
 '''Function to convert the html file into csv'''
 def converter():
-    #path to the html files for the Time_DATASET
-    #path_Time = os.getcwd()+ "\part_1\part_1_1\Time_DATASET\DOCUMENTS\_" 
     #initialization of the dataframe for the time csv
     time_df=pd.DataFrame(columns=['ID','body']) 
     #for each doc in the folder Time_DATASET
     for j in range(1,423): 
         #define the file name
-        #filename2=path_Time+'_'*5+str(j)+'.html' 
         filename2='_'*6+str(j)+'.html' 
         #open the file in reading mode
         with open(filename2) as f:
