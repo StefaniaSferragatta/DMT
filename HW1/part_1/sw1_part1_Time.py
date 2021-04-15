@@ -1,29 +1,30 @@
+import os
+import csv
+import time
+import random
+import numpy as np
+import modin.pandas as pd
+from bs4 import BeautifulSoup
 from whoosh.index import create_in
 from whoosh.fields import *
 from whoosh.analysis import *
 from whoosh.qparser import *
+from whoosh.writing import AsyncWriter
 from whoosh import scoring
 from whoosh import *
-from whoosh.writing import AsyncWriter
-import csv
-import time
-import os
-import numpy as np
-import modin.pandas as pd
-from bs4 import BeautifulSoup
-import random
 from Utilities_time import * #my script .py with the implementation of the evaluation metrics and utilities functions
 
 '''Function to convert the html file into csv'''
 def converter():
     #path to the html files for the Time_DATASET
-    path_Time = os.getcwd()+ "\part_1\part_1_1\Time_DATASET\DOCUMENTS\_" 
+    #path_Time = os.getcwd()+ "\part_1\part_1_1\Time_DATASET\DOCUMENTS\_" 
     #initialization of the dataframe for the time csv
     time_df=pd.DataFrame(columns=['ID','body']) 
     #for each doc in the folder Time_DATASET
     for j in range(1,423): 
         #define the file name
-        filename2=path_Time+'_'*5+str(j)+'.html' 
+        #filename2=path_Time+'_'*5+str(j)+'.html' 
+        filename2='_'*6+str(j)+'.html' 
         #open the file in reading mode
         with open(filename2) as f:
             content = f.read() 
@@ -37,13 +38,13 @@ def converter():
 
 # save the doc from Time dataset into csv file format
 doc_Time_converted = converter()
-doc_Time_converted.to_csv(os.getcwd()+"\part_1\part_1_1\Time_DATASET\Time_to_index.csv")
+doc_Time_converted.to_csv(os.getcwd()+"\Time_to_index.csv")
 
 '''First part of the software for the search engines'''
 def sw_1(analyzer,filename):
     # creating schema with fields id and content for the body
     schema = Schema(id=ID(stored=True),content=TEXT(stored=False, analyzer=analyzer))
-    directory_containing_the_index = os.getcwd()+"\part_1\part_1_1\Time_DATASET" 
+    directory_containing_the_index = './directory_index'
     # create an empty-index according to the just defined schema in the directory where csv file is
     ix = create_in(directory_containing_the_index, schema) 
     # open the index file
@@ -68,9 +69,9 @@ def sw_1(analyzer,filename):
     # close the file
     in_file.close()
     
- '''Defing the query engine (second part of the software for the search engines)'''
+'''Defing the query engine (second part of the software for the search engines)'''
 def sw_2(analyzer,score_fun,input_query,max_number_of_results):
-    directory_containing_the_index = os.getcwd()+"\part_1\part_1_1\Time_DATASET" 
+    directory_containing_the_index = './directory_index'
     # thanks to the ix we can retreive doc of interest for the given SE configurations
     ix = index.open_dir(directory_containing_the_index) 
     # define a QueryParser for parsing the input_query
@@ -98,11 +99,11 @@ def executor(analyzer,score_fun):
     tmp1=pd.DataFrame() #temporary dataframe 
     
     # open the file with all the queries
-    Queries_file1= readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Queries.tsv")
+    Queries_file1= readfile(r"time_Queries.tsv")
     Queries=pd.DataFrame(Queries_file1[1:],columns=['Query_ID','Query'])
     
     # open the file of the GT
-    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
+    gt_csv = readfile(r"time_Ground_Truth.tsv")
     gt1 = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
 
     #define a list with the unique query ids
@@ -113,7 +114,7 @@ def executor(analyzer,score_fun):
         #key=Query_id, value=number of relevant documents related to that query_id
         dq1[i]=len(list(gt1[gt1['Query_id']==i]['Relevant_Doc_id']))
 
-    file_toindex1=os.getcwd()+"\part_1\part_1_1\Time_DATASET\Time_to_index.csv"
+    file_toindex1=os.getcwd()+"\Time_to_index.csv"
     # invoke the function to create the schema and to store the index file based on the retrieved 'doc_to_index.csv' file  
     sw_1(analyzer,file_toindex1)
     # for each index in the query set
@@ -132,7 +133,7 @@ def executor(analyzer,score_fun):
 '''Definition of the core search engine'''
 def search_engine():
     # open the GT
-    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
+    gt_csv = readfile(r"time_Ground_Truth.tsv")
     gt1 = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
 
     list_mrr1=[] # to store the MRR values for each SE configuration 
@@ -152,10 +153,10 @@ def search_engine():
             # execute queries with the chosen configuration
             sr_1=executor(analyzers[x],score_functions[y]) 
             #save results of the search engine
-            sr_1.to_csv(os.getcwd()+"\part_1\part_1_1\Time_DATASET"+str(i)+".csv",index=False) 
+            sr_1.to_csv("Time_DATASET"+str(i)+".csv",index=False) 
             
             #open the file and compute the MRR
-            file_sr = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET"+str(i)+".csv")
+            file_sr = open(r"Time_DATASET"+str(i)+".csv")
             se_csv = list(csv.reader(file_sr, delimiter=","))
             sr = pd.DataFrame(se_csv[1:],columns=['Rank','Doc_ID','Score','Query_id'])
             
@@ -163,7 +164,7 @@ def search_engine():
             i+=1
     # save into a table with MRR evaluation for every search engine configuration 
     mrrs=pd.DataFrame(list_mrr1)
-    mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Time_DATASET\mrr.csv", index=False) #store MRR table
+    mrrs.to_csv("mrr.csv", index=False) #store MRR table
     
 # exec the search engine with the different configurations for the Time dataset
 search_engine()
@@ -171,14 +172,14 @@ search_engine()
 '''Function for the creation od the distribution table'''
 def r_distribution(num_configuration): 
     # Open the GT
-    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
+    gt_csv = readfile(r"time_Ground_Truth.tsv")
     gt = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
     #define an empty list that will contanin the r_precision for each query in the GT
     r_list = []
     #compute the r-precision on each SE 
     for i in range(1,num_configuration+1): 
         #read the SE results for the time dataset
-        file_se = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET"+ str(i)+".csv")
+        file_se = open(r"Time_DATASET"+ str(i)+".csv")
         se_csv = list(csv.reader(file_se, delimiter=","))
         sr = pd.DataFrame(se_csv[1:],columns=['Rank','Doc_ID','Score','Query_id'])
         
@@ -201,12 +202,12 @@ def r_distribution(num_configuration):
 
 #invoke the function and save the df into a csv file
 r_pr_distr = r_distribution(9) 
-r_pr_distr.to_csv('part_1\part_1_1\Time_DATASET\R_precision_distribution.csv') 
+r_pr_distr.to_csv('R_precision_distribution.csv') 
 
 '''Function to store the top 5 configuration according to the MRR'''
 def top_five():
     #open the file with the mrr and save it into a df
-    file_MRR = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\mrr.csv")
+    file_MRR = open(r"mrr.csv")
     MRR_csv = list(csv.reader(file_MRR, delimiter=","))
     mrr_time = pd.DataFrame(MRR_csv[1:])
     #add cols name
@@ -221,18 +222,18 @@ def top_five():
     top_five = top.index
     return top_five
 
-top_conf = top_five()#(mrr_time)
+top_conf = top_five()
 top_five = list(top_conf)
 
 '''P@k on the top 5 configurations'''
 def p_topfive(top,k):
     p_at_k_list =[]
-    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
+    gt_csv = readfile(r"time_Ground_Truth.tsv")
     gt = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
     #for each index of the top 5
     for i in top:
         #read the SE results for the time dataset
-        file_se = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET"+ str(i)+".csv")
+        file_se = open(r"Time_DATASET"+ str(i)+".csv")
         se_csv = list(csv.reader(file_se, delimiter=","))
         sr = pd.DataFrame(se_csv[1:],columns=['Rank','Doc_ID','Score','Query_id'])
         #compute the P@k and store the result into a list
@@ -257,12 +258,12 @@ plot1.savefig('Time_p_plot.jpg')
 '''nDCG on the top 5 configurations'''
 def ndcg_topfive(top,k):
     ndcg_list =[]
-    gt_csv = readfile(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET\time_Ground_Truth.tsv")
+    gt_csv = readfile(r"time_Ground_Truth.tsv")
     gt = pd.DataFrame(gt_csv[1:],columns=['Query_id','Relevant_Doc_id'])
     
     for i in top:
         #read the SE results for the time dataset
-        file_se = open(r"C:\Users\Stefania\DMT_HW1\part_1\part_1_1\Time_DATASET"+ str(i)+".csv")
+        file_se = open(r"Time_DATASET"+ str(i)+".csv")
         se_csv = list(csv.reader(file_se, delimiter=","))
         sr = pd.DataFrame(se_csv[1:],columns=['Rank','Doc_ID','Score','Query_id'])
         #compute the nDCG and store the result into a list
