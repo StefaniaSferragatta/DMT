@@ -3,26 +3,25 @@ import csv
 import time
 import random
 import numpy as np
-import modin.pandas as pd
+import pandas as pd
 from bs4 import BeautifulSoup
 from whoosh.index import create_in
 from whoosh.fields import *
 from whoosh.analysis import *
 from whoosh.qparser import *
 from whoosh.writing import AsyncWriter
+from whoosh import scoring
 from whoosh import *
 from Utilities_cranfield import * #my .py script with the implementation of the eval matrics and some utilities functions
 
 '''Function to convert the html file into csv'''
 def converter():
-    #path to the html files for the Cranfield_DATASET
-    path_Cranfield = os.getcwd()+ "\part_1\part_1_1\Cranfield_DATASET\DOCUMENTS\_" 
     #initialization of the dataframe for the crainfield csv   
     cranfield_df=pd.DataFrame(columns=['ID','title','body']) 
     # for each doc in the folder Cranfield_DATASET
     for i in range(1,1401): 
         #define the file name
-        filename1=path_Cranfield+'_'*5+str(i)+'.html' 
+        filename1='_'*6+str(i)+'.html' 
         #open the file in reading mode
         with open(filename1) as f:
             content = f.read() 
@@ -38,7 +37,7 @@ def converter():
 
 # save the doc from Cranfield dataset into csv file format
 doc_Cran_converted = converter()
-doc_Cran_converted.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\doc_to_index.csv")
+doc_Cran_converted.to_csv(os.getcwd()+"\doc_to_index.csv")
 
 
 '''First part of the software for the search engines'''
@@ -46,7 +45,7 @@ def sw_1(analyzer,filename):
     # creating schema with fields id, title and content
     schema = Schema(id=ID(stored=True),title=TEXT(stored=False, analyzer=analyzer),\
                 content=TEXT(stored=False, analyzer=analyzer))
-    directory_containing_the_index = os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET" 
+    directory_containing_the_index = './directory_index'
     # create an empty-index according to the just defined schema in the directory where csv file is
     ix = create_in(directory_containing_the_index, schema) 
     # open the index file
@@ -74,7 +73,7 @@ def sw_1(analyzer,filename):
     
 '''Defing the query engine (second part of the software for the search engines)'''
 def sw_2(score_fun,input_query,max_number_of_results):
-    directory_containing_the_index = os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET" 
+    directory_containing_the_index = './directory_index'
     # thanks to the ix we can retreive doc of interest for the given SE configurations
     ix = index.open_dir(directory_containing_the_index) 
     # define a QueryParser for parsing the input_query
@@ -101,10 +100,9 @@ def executor(analyzer,score_fun):
     result=pd.DataFrame() # dataframe with the results of the given SE for ALL the queries; 
     tmp=pd.DataFrame() #tmp dataframe 
     # open the file with all the queries
-    Queries_file=os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Queries.tsv"
-    Queries=pd.read_csv(Queries_file,sep='\t')
+    Queries=pd.read_csv(os.getcwd()+"\cran_Queries.tsv",sep='\t')
     # open the file of the GT
-    gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t') 
+    gt=pd.read_csv(os.getcwd()+"\cran_Ground_Truth.tsv", sep='\t') 
     # define a list with the unique query ids
     Q=list(gt['Query_id'].unique()) 
     dq={} 
@@ -112,7 +110,7 @@ def executor(analyzer,score_fun):
         #key=Query_id, value=number of relevant documents related to that query_id
         dq[i]=len(list(gt[gt['Query_id']==i]['Relevant_Doc_id']))
 
-    file_toindex=os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\doc_to_index.csv"
+    file_toindex=os.getcwd()+"\doc_to_index.csv"
     # invoke the function to create the schema and to store the index file based on the retrieved 'doc_to_index.csv' file  
     sw_1(analyzer,file_toindex)
     # for each index in the query set
@@ -131,7 +129,7 @@ def executor(analyzer,score_fun):
 '''Defining the core function for the search engine'''
 def search_engine():
     # open the ground truth
-    gt=pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
+    gt=pd.read_csv(os.getcwd()+"\cran_Ground_Truth.tsv", sep='\t')
     list_mrr=[] # to store the MRR values for each SE configuration 
     # define the scoring functions
     score_functions = [scoring.FunctionWeighting(pos_score_fn),scoring.PL2(),scoring.BM25F(B=0.75, content_B=1.0, K1=1.5)]
@@ -149,14 +147,14 @@ def search_engine():
             #execute queries with the chosen configuration
             se=executor(analyzers[x],score_functions[y]) 
             #save results of the search engine
-            se.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+str(i)+".csv",index=False) 
+            se.to_csv(os.getcwd()+"\Cranfield_DATASET"+str(i)+".csv",index=False) 
             #compute the MRR 
             list_mrr.append((analyz[x]+scor_fun[y],MRR(se,gt))) 
             #update the counter
             i+=1
     # save into a table with MRR evaluation for every search engine configuration 
     mrrs=pd.DataFrame(list_mrr)
-    mrrs.to_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv", index=False) #store MRR table
+    mrrs.to_csv(os.getcwd()+"\mrr.csv", index=False) #store MRR table
     
 # exec the search engine with the different configurations for the Cranfield dataset
 search_engine() 
@@ -164,10 +162,10 @@ search_engine()
 '''Function for the creation of the r_precision distribution values''' 
 def r_distribution(num_configuration): # 'num_configuration' to change if the config changes
     # compute the r-precision eval metric on the SE config
-    gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
+    gt = pd.read_csv(os.getcwd()+"\cran_Ground_Truth.tsv", sep='\t')
     r_list = [] #list to store the results
     for i in range(1,num_configuration+1): 
-        se = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
+        se = pd.read_csv(os.getcwd()+"\Cranfield_DATASET"+ str(i)+".csv",sep=',')
         r_list.append(r_precision(se,gt))
     #store the result into a df
     R_precision = pd.DataFrame(r_list)
@@ -187,11 +185,11 @@ def r_distribution(num_configuration): # 'num_configuration' to change if the co
 
 #invoke the function and save the df into a csv file
 r_pr_distr = r_distribution(num_configuration=9) 
-r_pr_distr.to_csv('part_1\part_1_1\Cranfield_DATASET\R_precision_distribution.csv') 
+r_pr_distr.to_csv('R_precision_distribution.csv') 
 
 # select the top 5 configuration according to the MRR
 def top_five():
-    mrr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\mrr.csv",sep=',')
+    mrr = pd.read_csv(os.getcwd()+"\mrr.csv",sep=',')
     mrr.columns = ['Config','MRR'] #add cols name
     mrr.index = np.arange(1, len(mrr)+1) #reset a index
     top = mrr.sort_values(by = ['MRR'],ascending=False).head(5)
@@ -204,10 +202,10 @@ top_five = list(top_conf)
 ''' Compute the P@k on the top 5'''
 def p_topfive(top,k):
     p_at_k_list =[]
-    gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
+    gt = pd.read_csv(os.getcwd()+"\cran_Ground_Truth.tsv", sep='\t')
     #for each index of the top 5
     for i in top:
-        sr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
+        sr = pd.read_csv(os.getcwd()+"\Cranfield_DATASET"+ str(i)+".csv",sep=',')
         #compute the P@k and store the result into a list
         p_at_k_list.append(p_at_k(sr,gt,k))
     return p_at_k_list
@@ -230,9 +228,9 @@ plot1.savefig('Cranfield_p_plot.jpg')
 '''Compute the nDCG on the top 5'''
 def ndcg_topfive(top,k):
     ndcg_list =[]
-    gt = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET\cran_Ground_Truth.tsv", sep='\t')
+    gt = pd.read_csv(os.getcwd()+"\cran_Ground_Truth.tsv", sep='\t')
     for i in top:
-        sr = pd.read_csv(os.getcwd()+"\part_1\part_1_1\Cranfield_DATASET"+ str(i)+".csv",sep=',')
+        sr = pd.read_csv(os.getcwd()+"\Cranfield_DATASET"+ str(i)+".csv",sep=',')
         #compute the nDCG and store the result into a list
         ndcg_list.append(n_dcg(sr,gt,k))
     return ndcg_list
