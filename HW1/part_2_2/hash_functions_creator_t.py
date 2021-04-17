@@ -6,12 +6,14 @@ import math
 import os
 
 ################################################
-num_hash_functions = 275 # r = 25 & b = 11
-upper_bound_on_number_of_distinct_elements  = 10000000
+# r = 200 & b = 1
+num_hash_functions = 300
+upper_bound_on_number_of_distinct_elements = 10000000
 #upper_bound_on_number_of_distinct_elements =   138492
 #upper_bound_on_number_of_distinct_elements =  3746518
 
 ################################################
+
 
 ### primality checker
 def is_prime(number):
@@ -24,6 +26,7 @@ def is_prime(number):
 			return False
 	return True
 
+
 set_of_all_hash_functions = set()
 while len(set_of_all_hash_functions) < num_hash_functions:
 	a = random.randint(1, upper_bound_on_number_of_distinct_elements-1)
@@ -35,8 +38,9 @@ while len(set_of_all_hash_functions) < num_hash_functions:
 	current_hash_function_id = tuple([a, b, p])
 	set_of_all_hash_functions.add(current_hash_function_id)
 
+
 path_ = os.getcwd()
-f = open(path_ + '/hash_functions/275.tsv', 'w')
+f = open(path_ + '/hash_functions/300.tsv', 'w')
 f.write("a\tb\tp\tn" + "\n")
 for a, b, p in set_of_all_hash_functions:
 	f.write(str(a) + "\t" + str(b) + "\t" + str(p) + "\t" + str(upper_bound_on_number_of_distinct_elements) + "\n")
