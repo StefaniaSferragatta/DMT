@@ -6,7 +6,7 @@ import math
 import os
 
 ################################################
-# r = 200 & b = 1
+# r = 300 & b = 1
 num_hash_functions = 300
 upper_bound_on_number_of_distinct_elements = 10000000
 #upper_bound_on_number_of_distinct_elements =   138492
