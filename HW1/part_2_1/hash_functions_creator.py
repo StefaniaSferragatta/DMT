@@ -5,7 +5,8 @@ import math
 import os
 
 ################################################
-num_hash_functions = 275 # r = 25 & b = 11
+# r = 25 & b = 11
+num_hash_functions = 275
 upper_bound_on_number_of_distinct_elements  = 10000000
 #upper_bound_on_number_of_distinct_elements =   138492
 #upper_bound_on_number_of_distinct_elements =  3746518
@@ -35,6 +36,7 @@ while len(set_of_all_hash_functions) < num_hash_functions:
 	#
 	current_hash_function_id = tuple([a, b, p])
 	set_of_all_hash_functions.add(current_hash_function_id)
+
 
 path_ = os.getcwd()
 f = open(path_ + '/hash_functions/275.tsv', 'w')
