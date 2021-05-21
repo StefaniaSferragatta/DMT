@@ -24,6 +24,7 @@ def graph_create_from_tsv(tsvFilePath):
 
 # top k computation definition
 def compute_top_k(map__node_id__score, remove_pkmn, k=20):
+    # var remove_pkmn contains the pokemons in the topic, which we don't want in the list__node_id__score
     list__node_id__score = [(node_id, score) for node_id, score in map__node_id__score.items() if node_id not in remove_pkmn]
     list__node_id__score.sort(key=lambda x: (-x[1], x[0]))
     return list__node_id__score[:k]
@@ -34,8 +35,10 @@ def prob_topic(graph, poke_topic):
     # creating dictionary with keys the nodes of the graph, and values set to 0
     d_topic_nodes = dict.fromkeys(list(graph.nodes), 0)
     for pokemon in poke_topic:
+        # setting value for the pokemon in the topic
         d_topic_nodes[pokemon] = 1/num_nodes_topic
     return d_topic_nodes
+
 
 # starting code
 # first given sets
@@ -64,6 +67,7 @@ for key, val in sets.items():
                                                         remove_pkmn=val,
                                                         k=team_size - len(val))
     # pp.pprint(top_k__node_id__node_pagerank_value)
+    # top_k__node_id__node_pagerank_value contains the pokemon of the compute_top_k without the pokemons in the topic
     teams['team_' + key[-1]] = set([i[0] for i in top_k__node_id__node_pagerank_value] + list(val))
 
 # Printing sets of Pokemons with respective input sets from A to C
@@ -103,6 +107,7 @@ for key, val in sets.items():
                                                         remove_pkmn=val,
                                                         k=team_size - len(val))
     # pp.pprint(top_k__node_id__node_pagerank_value)
+    # top_k__node_id__node_pagerank_value contains the pokemon of the compute_top_k without the pokemons in the topic
     teams['team_' + key[-1]] = set([i[0] for i in top_k__node_id__node_pagerank_value] + list(val))
 
 print('Sets of Pokemons with Charizard')
