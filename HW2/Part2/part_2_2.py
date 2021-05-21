@@ -2,7 +2,7 @@ import csv
 import networkx as nx
 import pprint as pp
 
-
+# code from lab lesson
 def compute_good_local_community(graph, seed_node_id, alpha=0.9):
     #
     # Creation of the teleporting probability distribution for the selected node...
@@ -62,7 +62,7 @@ def compute_good_local_community(graph, seed_node_id, alpha=0.9):
     return set__node_ids_with_minimum_conductance, min_conductance_value
 
 
-# graph creation function
+# graph creation function same as part_2_1
 def graph_create_from_tsv(tsvFilePath):
     # reading tsv file
     input_file_handler = open(tsvFilePath, 'r', encoding="utf-8")
@@ -81,13 +81,15 @@ def graph_create_from_tsv(tsvFilePath):
     graph.add_edges_from(list_adj)
     return graph
 
-
+# beginning of the code without func definitions
+# given damping values
 damp_val = [0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55,
             0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05]
 
 graph = graph_create_from_tsv('dataset/pkmn_graph_data.tsv')
 output_data = 'dataset/output.tsv'
 
+# saving the nodes (pokemon) in a variable list
 pkmn_nodes = list(graph.nodes)
 # dictionary to store the frequency of a pokemon in a community
 pkmn_freq = dict.fromkeys(list(graph.nodes), 0)
@@ -96,15 +98,17 @@ pkmn_freq = dict.fromkeys(list(graph.nodes), 0)
 # (pokemon_name, number_of_nodes_in_the_local_community, conductance_value_of_the_local_community)
 res = []
 for perc, pokemon in enumerate(pkmn_nodes):
-    # how much has been done
+    # how much has been done, not really necessary for the final result, but useful to know if the code is OK
     print("{:.2%}".format(perc / len(pkmn_nodes)))
     set_local_comm = []
     for alpha in damp_val:
+        # saving all the local community of the pokemon for every value of damp_val
         set_local_comm.append(compute_good_local_community(graph, pokemon, alpha=alpha))
 
-    # x = [(set__node_ids_with_minimum_conductance, min_conductance_value)]
-    # x[0] = set__node_ids_with_minimum_conductance
-    # x[1] = min_conductance_value
+    # best_min_cond_val calculates the minimum conductance value among every local_comm calculated
+    # best_min_cond_val = [(set__node_ids_with_minimum_conductance, min_conductance_value)]
+    # best_min_cond_val[0] = set__node_ids_with_minimum_conductance
+    # best_min_cond_val[1] = min_conductance_value
     best_min_cond_val = min(set_local_comm, key=lambda x: x[1])
     res.append([pokemon, len(best_min_cond_val[0]), best_min_cond_val[1]])
 
@@ -116,6 +120,7 @@ for perc, pokemon in enumerate(pkmn_nodes):
 print('\n##############################')
 print('###### Writing tsv file ######')
 print('##############################\n')
+# sorting the local_community in alphabetical order
 res_alpha_order = list(sorted(res, key=lambda x: x[0]))
 f = open(output_data, 'w')
 f.write("pokemon_name\tnumber_of_nodes_in_the_local_community\tconductance_value_of_the_local_community" + "\n")
@@ -124,7 +129,7 @@ for row in res_alpha_order:
 f.close()
 print('############ DONE ############')
 
-# calculating high and low frequency of a pokemon
+# calculating high and low frequency of a pokemon in descending order
 sort_dict_desc = dict(sorted(pkmn_freq.items(), key=lambda x: x[1], reverse=True))
 dict_len = len(sort_dict_desc)
 
