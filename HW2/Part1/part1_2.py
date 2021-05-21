@@ -49,7 +49,7 @@ def tuning_KNNBaseline(data):
     ex_time= round(time.time()-start,2)
     #store the best score obtained
     best_score = rcv.best_score['rmse']
-    #store the best parameters, usefull to find the avg_rmse
+    #store the best parameters
     best_param = rcv.best_params['rmse']
     return (ex_time,best_score,best_param)
 
@@ -59,15 +59,10 @@ time1 = randcv_dt1[0]
 print("Execution time for dataset1: ", round(time1,2),'s')
 print()
 best_score1 = randcv_dt1[1]
-print("Best score for dataset1: ",best_score1)
+print("Best score for dataset1: ",best_score1) #avg RMSE from KNNBaseline obtained on dataset1
 print()
-best_param1 = randcv_dt1[2]
+best_param1 = randcv_dt1[2] #list of the best params
 print(best_param1)
-
-#Use the best params to get the avg RMSE from KNNBaseline on dataset1
-kf = KFold(n_splits=5, random_state=0)
-current_algo=KNNBaseline(k=50, min_k=11, sim_options={'name': 'pearson_baseline', 'user_based':False,'min_support': 13}, bsl_options= {'method': 'sgd','learning_rate':0.005,'n_epochs': 50,'reg':0.05},verbose=True)
-cross_validate(current_algo, data1, measures=['RMSE'], cv=kf,n_jobs=4, verbose=True)
 
 #tuning the hyperpameters for the KNNBaseline() on dataset2
 randcv_dt2 = tuning_KNNBaseline(data2)
@@ -75,15 +70,10 @@ time2 = randcv_dt2[0]
 print("Execution time for dataset2: ", round(time2,2), 's')
 print()
 best_score2 = randcv_dt2[1]
-print("Best score for dataset2: ",best_score2)
+print("Best score for dataset2: ",best_score2) #avg RMSE from KNNBaseline obtained on dataset2
 print()
-best_param2 = randcv_dt2[2]
+best_param2 = randcv_dt2[2] #list of the best params
 print(best_param2)
-
-#Use the best params to get the avg RMSE from KNNBaseline on dataset2
-current_algo=KNNBaseline(k=25, min_k=9, sim_options={'name': 'pearson_baseline', 'user_based':True,'min_support':5}, bsl_options= {'method': 'sgd','learning_rate':0.001,'n_epochs': 30,'reg':0.01},verbose=True)
-cross_validate(current_algo, data2, measures=['RMSE'], cv=kf,n_jobs=4, verbose=True)
-
 
 ''' SVD hyperparameters tuning using GridSearchCV() for both dataset1 and dataset2'''
 
@@ -97,10 +87,11 @@ def tuning_SVD(data):
     start=time.time()
     gs = GridSearchCV(SVD, param_grid, measures=['rmse'], cv=5,n_jobs=4) 
     gs.fit(data)
+    #execution time
     ex_time= round(time.time()-start,2)
     #store the best score obtained
     best_score = gs.best_score['rmse']
-    #store the best params configuration, usefull for computing the avg_rmse
+    #store the best params configuration
     best_param = gs.best_params['rmse']
     return (ex_time,best_score,best_param)
 
@@ -110,14 +101,11 @@ time1 = grid_cv1[0]
 print("Execution time for dataset1: ", round(time1,2),'s')
 print()
 best_score1 = grid_cv1[1]
-print("Best score for dataset1: ",best_score1)
+print("Best score for dataset1: ",best_score1) #avg RMSE from SVD obtained on dataset1
 print()
-best_param1 = grid_cv1[2]
+best_param1 = grid_cv1[2] #list of the best params
 print(best_param1)
 
-#Use the best params to get the avg RMSE from SVD on dataset1
-current_algo= SVD(n_factors=100,lr_all=0.01,init_mean= 0.1,reg_all=0.07)
-cross_validate(current_algo, data1, measures=['RMSE'],cv=kf, n_jobs=4,verbose=True )
 
 #tuning the hyperpameters for the SVD() on dataset2
 grid_cv2= tuning_SVD(data2)
@@ -125,11 +113,7 @@ time2 = grid_cv2[0]
 print("Execution time for dataset2: ", round(time2,2),'s')
 print()
 best_score2 = grid_cv2[1]
-print("Best score for dataset2: ",best_score2)
+print("Best score for dataset2: ",best_score2) #avg RMSE from SVD obtained on dataset1
 print()
-best_param2 = grid_cv2[2]
+best_param2 = grid_cv2[2] #list of the best params
 print(best_param2)
-
-#Use the best params to get the avg RMSE from SVD on dataset2
-current_algo= SVD(n_factors=150, lr_all=0.008,init_mean=0.02,reg_all=0.1)
-cross_validate(current_algo, data2, measures=['RMSE'], cv=kf, n_jobs=4, verbose=True)
