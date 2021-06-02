@@ -45,7 +45,7 @@ with jsonlines.open('emb_dev.jsonl', mode = 'w') as writer:
     
 ''' TRAIN SET '''
 train_embeddings = []
-with jsonlines.open('processed-train-kilt.jsonl') as reader:
+with jsonlines.open('prepro_fever-train-kilt.jsonl') as reader:
     for obj in reader:
       claims_train=str(obj) #convert the list of dict into list of str for the embeddings
       embeddings = model.encode(claims_train) #Get the embeddings for str
