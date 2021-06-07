@@ -112,10 +112,10 @@ x_test = [n.strip('][').split(', ') for n in test_set]
 """ KNN Classifier """
 
 ''' Method for tuning the hyperparameters
-  Input: splitted dev set into x and y for the fit of the RandomizedSearchCV
+  Input: splitted train set into x and y for the fit of the RandomizedSearchCV
   Output: best params to use for the KNN
 '''
-def tuning(x_dev,y_dev):
+def tuning(x_train,y_train):
     # define the parameter values that should be searched
     k_range = list(range(1,30,4))
     weight_options = ['uniform', 'distance'] # distance: more weight to more similar values
@@ -129,7 +129,7 @@ def tuning(x_dev,y_dev):
     #define the classification model chosen
     model = KNeighborsClassifier()
     rand = RandomizedSearchCV(model, param_grid, cv=5, scoring='accuracy', n_iter=10, random_state=5, n_jobs=-1)
-    rand.fit(x_dev, y_dev)
+    rand.fit(x_train,y_train)
     rand.cv_results_
     
     # examine the best model
@@ -141,7 +141,7 @@ def tuning(x_dev,y_dev):
 
 """Now using the best parameter obtained by the tuning with the RandomizedSearchCV, we can train the train_set with the KNN"""
 
-params = tuning(x_dev,y_dev) #dict of best parameters for the classifier
+params = tuning(x_train,y_train) #dict of best parameters for the classifier
 
 ''' Method for training the model using the KNeighborsClassifier() as binary classifier. After the training, the model is saved into a pickle file
   Input: dictionary of the tuned parameters, train set splitted in feature and target (x_train, y_train)
