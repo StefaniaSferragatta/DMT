@@ -42,7 +42,7 @@ model.to(device)
 
 # loading the model for sentence_transformer in the GPU
 model_sent = SentenceTransformer('paraphrase-distilroberta-base-v1')
-model.to(device)
+model_sent.to(device)
 
 # the storage for both models is around 3,5 GB
 
