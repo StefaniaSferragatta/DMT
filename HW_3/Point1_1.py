@@ -34,7 +34,7 @@ model = SentenceTransformer('paraphrase-distilroberta-base-v1') #loading the mod
 dev_embeddings = []
 with jsonlines.open('prepro_fever-dev-kilt.jsonl') as reader:
     for obj in reader:
-      claims_dev=str(obj) #convert the list of dict into list of str for the embeddings
+      claims_dev = obj['input'] #extract the input content for the embedding
       embeddings = model.encode(claims_dev) #Get the embeddings for str
       obj['claim_embedding'] = embeddings.tolist() #add a new item (the embeddings list) in the dict
       dev_embeddings.append(obj) #store the new dict into a list for saving the result into a new json file
@@ -47,7 +47,7 @@ with jsonlines.open('emb_dev.jsonl', mode = 'w') as writer:
 train_embeddings = []
 with jsonlines.open('prepro_fever-train-kilt.jsonl') as reader:
     for obj in reader:
-      claims_train=str(obj) #convert the list of dict into list of str for the embeddings
+      claims_train = obj['input'] #extract the input content for the embedding
       embeddings = model.encode(claims_train) #Get the embeddings for str
       obj['claim_embedding'] = embeddings.tolist() #add a new item (the embeddings list) in the dict
       train_embeddings.append(obj) #store the new dict into a list for saving the result into a new json file
@@ -60,7 +60,7 @@ with jsonlines.open('emb_train.jsonl', mode = 'w') as writer:
 test_embeddings = []
 with jsonlines.open('fever-test_without_answers-kilt.jsonl') as reader:
     for obj in reader:
-      claims_test=str(obj) #convert the list of dict into list of str for the embeddings
+      claims_test= obj['input'] #extract the input content for the embedding
       embeddings = model.encode(claims_test) #Get the embeddings for str
       obj['claim_embedding'] = embeddings.tolist() #add a new item (the embeddings list) in the dict
       test_embeddings.append(obj) #store the new dict into a list for saving the result into a new json file
