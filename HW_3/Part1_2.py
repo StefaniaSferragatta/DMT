@@ -9,7 +9,6 @@ from csv import DictReader
 
 # model training
 #for binary classification
-from sklearn.neighbors import KNeighborsClassifier 
 from sklearn.linear_model import LogisticRegression
 #for hyperparams tuning
 from sklearn.model_selection import RandomizedSearchCV
@@ -103,130 +102,6 @@ test_set = test_df.claim_embedding
 #convert string to list 
 x_test = [n.strip('][').split(', ') for n in test_set]
 
-""" KNN Classifier """
-
-''' Method for tuning the hyperparameters
-  Input: splitted train set into x and y for the fit of the RandomizedSearchCV
-  Output: best params to use for the KNN
-'''
-def tuning(x_train,y_train):
-    # define the parameter values that should be searched
-    k_range = list(range(1,30,4))
-    weight_options = ['uniform', 'distance'] # distance: more weight to more similar values
-    algo_options = ['auto', 'ball_tree', 'kd_tree', 'brute']
-    distance_options = [1,2,3] # different types of distances (manhattan, euclidean, minkowksi)
-    
-    # save the "parameter grid"
-    param_grid = dict(n_neighbors=k_range, weights=weight_options, algorithm =algo_options,  p=distance_options)
-    print('Params grid: ',param_grid) #need this for the report
-
-    #define the classification model chosen
-    model = KNeighborsClassifier()
-    rand = RandomizedSearchCV(model, param_grid, cv=5, scoring='accuracy', n_iter=10, random_state=5, n_jobs=-1)
-    rand.fit(x_train,y_train)
-    rand.cv_results_
-    
-    # examine the best model
-    print('Rand. Best Score: ', rand.best_score_)
-    #save the optimize parameters
-    best_param = rand.best_params_
-    #return the tuning params for the model
-    return best_param
-
-"""Now using the best parameter obtained by the tuning with the RandomizedSearchCV, we can train the train_set with the KNN"""
-
-params = tuning(x_train,y_train) #dict of best parameters for the classifier
-
-''' Method for training the model using the KNeighborsClassifier() as binary classifier. After the training, the model is saved into a pickle file
-  Input: dictionary of the tuned parameters, train set splitted in feature and target (x_train, y_train)
-'''
-def classifier(params, x_train, y_train):
-    #train the model using the optimized params obtained in the tuning
-    knn = KNeighborsClassifier(n_neighbors=params['n_neighbors'], weights=params['weights'], algorithm= params['algorithm'], p=params['p'])
-    
-    #fit the model
-    knn.fit(x_train, y_train)
-    
-    # save the model to disk
-    filename = 'KNN.sav'
-    pickle.dump(knn, open(filename, 'wb'))
-
-classifier(params, x_train, y_train)
-
-"""MAKE CLASS PREDICTION ON  THE SAVED MODEL """
-
-# load the trained model from disk
-knn = pickle.load(open('KNN.sav', 'rb'))
-
-# make class predictions for the dev set, we need this for the evaluation
-y_pred_class = knn.predict(x_dev)
-
-''' Function for the evaluation of the model. Using the metrics function from the library sklearn, here we compute the accuracy_score, the confusion_matrix and the precision and recall of the targets 'SUPPORTS', 'REFUTES'.
-  Input: y_dev, predicted class
-  Output: accuracy score,confusion matrix,precision score,recall score
-'''
-def evaluation(y_dev,y_pred_class):    
-    # compute the accuracy 
-    accuracy = metrics.accuracy_score(y_dev, y_pred_class)
-    
-    #build the confusion matrix and plot it
-    confusion = metrics.confusion_matrix(y_dev, y_pred_class)
-                #[row, column]
-    TP = confusion[1, 1]
-    TN = confusion[0, 0]
-    FP = confusion[0, 1]
-    FN = confusion[1, 0]
-    
-    # visualize Confusion Matrix
-    sns.heatmap(confusion,annot=True,fmt="d") 
-    plt.title('Confusion Matrix')
-    plt.xlabel('Predicted')
-    plt.ylabel('Actual')
-    plt.show()
-    
-    # compute the precision and the recall on the label and print them
-    target_names = ['SUPPORTS', 'REFUTES']
-    print(metrics.classification_report(y_dev, y_pred_class, target_names=target_names))
-    
-    return accuracy,confusion
-
-results = evaluation(y_dev,y_pred_class)
-
-print('Accuracy value: ',results[0])
-conf_matrix = results[1]
-
-
-"""For the chosen classifier, get predictions for the official test set associated to the best hyperparameter configuration.**"""
-# load the trained model from disk
-knn = pickle.load(open('KNN.sav', 'rb'))
-
-# get predictions for the official test set 
-pred_test = knn.predict(x_test)
-
-#open the file emb_test.csv and store its content
-with open('emb_test.csv', 'r') as read_obj:
-    # pass the file object to DictReader() to get the DictReader object
-    dict_reader = DictReader(read_obj)
-    # get a list of dictionaries from dict_reader
-    json_test = list(dict_reader)
-
-#delete the useless fields from the content  
-for i in range(len(json_test)):
-    del json_test[i]['claim_embedding'], json_test[i]['input']
-
-#add the field 'output' with the value that corresponds to the prediction
-for index in range(len(json_test)): 
-    if pred_test[index]==1:
-        json_test[index]['output']= [{'answer':"SUPPORT"}]
-    else:
-        json_test[index]['output']= [{'answer':"REFUTES"}]
-
-
-"""Put the predictions in a file named “test_set_pred_1.jsonl” """
-with jsonlines.open('test_set_pred_1.jsonl', mode = 'w') as writer:
-    writer.write(json_test)
-
-    
 """ LR Classifier """
 
 ''' Method for tuning the hyperparameters
@@ -348,5 +223,5 @@ for index in range(len(json_test)):
 """Put the predictions in a file named “test_set_pred_2.jsonl” """
 
 # save the prediction into a file
-with jsonlines.open('test_set_pred_2.jsonl', mode = 'w') as writer:
+with jsonlines.open('test_set_pred_1.jsonl', mode = 'w') as writer:
     writer.write(json_test)
