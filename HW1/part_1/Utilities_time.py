@@ -89,12 +89,15 @@ def n_dcg(se,gt,k):
         #create two lists one for the se one for the gt relative to that query id
         seID = se['Doc_ID'].loc[se['Query_id'] == i].tolist()
         gtID = gt['Relevant_Doc_id'].loc[gt['Query_id'] == i].tolist()
-        for el in gtID:
-            for it in seID[:k]:
-                #if the doc_id is in the gt then rel=1, else rel=0
-                rel=1 if it==el else 0
-        for p in range(1,k+1):
-            dcg+=rel/(math.log2(p+1))
-            idcg+=1/(math.log2(p+1))
+        pos = 1
+        dic_rel = {}
+        for it in seID[:k]:
+            rel=1 if it in gtID else 0
+            dic_rel[str(pos)]= rel
+            pos+=1
+        k1=k if k<len(seID[:k]) else len(seID[:k])
+        for p in range(1,k1+1):
+            dcg+=dic_rel[str(p)]/(math.log2(p+1))
+            idcg+=1/(math.log2(j+1))
         ndcg.append(dcg/idcg)
     return (mean(ndcg))
